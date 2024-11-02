@@ -6,11 +6,13 @@ import (
 )
 
 type AuthRepository struct {
-	db gorm.DB
+	db *gorm.DB
 }
 
-func NewAuthRepository() *AuthRepository {
-	return &AuthRepository{}
+func NewAuthRepository(db *gorm.DB) *AuthRepository {
+	return &AuthRepository{
+		db: db,
+	}
 }
 
 func (a *AuthRepository) GetAllUsers() ([]models.User, error) {

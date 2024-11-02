@@ -11,9 +11,9 @@ import (
 
 func main() {
 	cfg := config.LoadConfig("config/auth-config.yaml")
-	db.InitializeDatabase(cfg.Database)
+	db := db.InitializeDatabase(cfg.Database)
 
-	authRepository := auth.NewAuthRepository()
+	authRepository := auth.NewAuthRepository(db)
 	authUseCase := auth.NewAuthUseCase(*authRepository, cfg.OpenGraphClientID, cfg.OpenGraphClientSecret)
 	authHandler := auth.NewAuthHandler(*authUseCase, cfg.OpenGraphClientID)
 
