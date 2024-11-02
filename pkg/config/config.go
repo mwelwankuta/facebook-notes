@@ -23,7 +23,7 @@ type Config struct {
 	RedisUrl              string `yaml:"redis_url"`
 }
 
-func LoadConfig(path string) *Config {
+func LoadConfig(path string) (*Config, error) {
 	var cfg Config
 
 	content, err := os.ReadFile(path)
@@ -31,7 +31,9 @@ func LoadConfig(path string) *Config {
 		panic("Could not read config file info")
 	}
 
-	yaml.Unmarshal(content, &cfg)
+	if err := yaml.Unmarshal(content, &cfg); err != nil {
+		return &cfg, err
+	}
 
 	if port := os.Getenv("port"); port != "" {
 		cfg.Port = port
@@ -52,5 +54,5 @@ func LoadConfig(path string) *Config {
 		cfg.RedisUrl = redisUrl
 	}
 
-	return &cfg
+	return &cfg, nil
 }
