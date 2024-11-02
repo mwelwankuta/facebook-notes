@@ -1,0 +1,6 @@
+port: 8080
+open_graph_client_id: blah
+open_graph_client_secret: blah
+database: root:@tcp(127.0.0.1:3306)/facebook-notes?charset=utf8mb4&parseTime=True&loc=Local
+redis_token: blah
+redis_url: blah
