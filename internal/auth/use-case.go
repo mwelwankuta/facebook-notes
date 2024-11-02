@@ -52,8 +52,8 @@ func (a *AuthUseCase) AuthenticateUser(code string) (models.User, error) {
 	return user, nil
 }
 
-func (a *AuthUseCase) GetAllUsers() ([]models.User, error) {
-	return a.repo.GetAllUsers()
+func (a *AuthUseCase) GetAllUsers(dto models.PaginateDto) ([]models.User, error) {
+	return a.repo.GetAllUsers(dto)
 }
 
 func (a *AuthUseCase) GetUserByID(userId string) (models.User, error) {

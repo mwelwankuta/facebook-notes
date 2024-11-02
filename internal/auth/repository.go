@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"strconv"
+
 	"github.com/mwelwankuta/facebook-notes/pkg/models"
 	"gorm.io/gorm"
 )
@@ -15,10 +17,21 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 	}
 }
 
-func (a *AuthRepository) GetAllUsers() ([]models.User, error) {
+// GetAllUsers returns all users
+func (a *AuthRepository) GetAllUsers(dto models.PaginateDto) ([]models.User, error) {
 	var users []models.User
 
-	result := a.db.Find(&users)
+	// convert string params to int for pagination
+	offset, err := strconv.Atoi(dto.Offset)
+	if err != nil {
+		return nil, err
+	}
+	limit, err := strconv.Atoi(dto.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	result := a.db.Find(&users).Offset(offset).Limit(limit)
 	if result.Error != nil {
 		return users, result.Error
 	}

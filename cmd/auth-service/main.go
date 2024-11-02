@@ -27,8 +27,14 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// authentication
 	e.POST("/api/facebook/login/callback", authHandler.AuthenticateUserHandler)
+	// endpoint called from client
 	e.GET("/api/facebook/login", authHandler.LoginWithFacebook)
+
+	// users
+	e.GET("/api/users", authHandler.GetAllUsersHandler)
+	e.GET("/api/users/:id", authHandler.GetUserByIDHandler)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
 }
