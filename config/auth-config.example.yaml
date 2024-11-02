@@ -1,0 +1,5 @@
+port: 8080
+database: user:password@tcp(127.0.0.1:3306)/<database_name>?charset=utf8mb4&parseTime=True&loc=Local
+open_graph_client_id: blah
+redis_token: blah
+open_graph_client_secret: blah

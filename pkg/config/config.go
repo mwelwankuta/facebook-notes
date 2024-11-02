@@ -3,7 +3,15 @@ package config
 import (
 	"os"
 
+	_ "github.com/joho/godotenv/autoload"
 	yaml "gopkg.in/yaml.v3"
+)
+
+const (
+	RedirectURI = "http://localhost:8080/callback"
+	FbAuthURL   = "https://www.facebook.com/v16.0/dialog/oauth"
+	FbTokenURL  = "https://graph.facebook.com/v16.0/oauth/access_token"
+	FbGraphAPI  = "https://graph.facebook.com/me"
 )
 
 type Config struct {

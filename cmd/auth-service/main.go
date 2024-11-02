@@ -14,11 +14,12 @@ func main() {
 	db.InitializeDatabase(cfg.Database)
 
 	authRepository := auth.NewAuthRepository()
-	authUseCase := auth.NewAuthUseCase(*authRepository)
-	authHandler := auth.NewAuthHandler(*authUseCase)
+	authUseCase := auth.NewAuthUseCase(*authRepository, cfg.OpenGraphClientID, cfg.OpenGraphClientSecret)
+	authHandler := auth.NewAuthHandler(*authUseCase, cfg.OpenGraphClientID)
 
 	e := echo.New()
-	e.POST("/api/authenticate", authHandler.AuthenticateUserHandler)
+	e.POST("/api/facebook/login/callback", authHandler.AuthenticateUserHandler)
+	e.GET("/api/facebook/login", authHandler.LoginWithFacebook)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
 }
