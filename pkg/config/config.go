@@ -21,8 +21,10 @@ type Config struct {
 	Database              string `yaml:"database"`
 	RedisToken            string `yaml:"redis_token"`
 	RedisUrl              string `yaml:"redis_url"`
+	JwtSecret             string `yaml:"jwt_secret"`
 }
 
+// LoadConfig loads the configuration from a file or environment variables if the file is not found
 func LoadConfig(path string) (*Config, error) {
 	var cfg Config
 
@@ -52,6 +54,9 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	if redisUrl := os.Getenv("redis_url"); redisUrl != "" {
 		cfg.RedisUrl = redisUrl
+	}
+	if jwtSecret := os.Getenv("jwt_secret"); jwtSecret != "" {
+		cfg.JwtSecret = jwtSecret
 	}
 
 	return &cfg, nil

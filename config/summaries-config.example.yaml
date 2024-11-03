@@ -1,0 +1,7 @@
+port: 9090
+open_ai_key: <open_ai_key>
+open_ai_secret: <open_ai_secret>
+database: root:@tcp(127.0.0.1:3306)/facebook-notes?charset=utf8mb4&parseTime=True&loc=Local
+redis_token: <redis_token>
+redis_url: <redis_url>
+jwt_token: supersecretpassword

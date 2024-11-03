@@ -5,8 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/mwelwankuta/facebook-notes/internal/auth"
 
+	"github.com/mwelwankuta/facebook-notes/internal/auth"
 	"github.com/mwelwankuta/facebook-notes/pkg/config"
 	"github.com/mwelwankuta/facebook-notes/pkg/db"
 )
@@ -20,21 +20,26 @@ func main() {
 	database := db.InitializeDatabase(cfg.Database)
 
 	authRepository := auth.NewAuthRepository(database)
-	authUseCase := auth.NewAuthUseCase(*authRepository, cfg.OpenGraphClientID, cfg.OpenGraphClientSecret)
+	authUseCase := auth.NewAuthUseCase(*authRepository, *cfg)
 	authHandler := auth.NewAuthHandler(*authUseCase, cfg.OpenGraphClientID)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// jwtMiddlware := echojwt.WithConfig(echojwt.Config{
+	// 	SigningKey:  []byte(cfg.JwtSecret),
+	// 	TokenLookup: "header:Authorization",
+	// })
+
 	// authentication
-	e.POST("/api/facebook/login/callback", authHandler.AuthenticateUserHandler)
+	e.POST("/api/auth/login/callback", authHandler.AuthenticateUserHandler)
 	// endpoint called from client
-	e.GET("/api/facebook/login", authHandler.LoginWithFacebook)
+	e.GET("/api/auth/login", authHandler.LoginWithFacebook)
 
 	// users
-	e.GET("/api/users", authHandler.GetAllUsersHandler)
-	e.GET("/api/users/:id", authHandler.GetUserByIDHandler)
+	e.GET("/api/auth/users", authHandler.GetAllUsersHandler)
+	e.GET("/api/auth/users/:id", authHandler.GetUserByIDHandler)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
 }

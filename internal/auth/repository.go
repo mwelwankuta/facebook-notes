@@ -39,6 +39,7 @@ func (a *AuthRepository) GetAllUsers(dto models.PaginateDto) ([]models.User, err
 	return users, nil
 }
 
+// GetUserByID returns a user by ID
 func (a *AuthRepository) GetUserByID(userId string) (models.User, error) {
 	var user models.User
 
@@ -50,6 +51,7 @@ func (a *AuthRepository) GetUserByID(userId string) (models.User, error) {
 	return user, nil
 }
 
+// CreateUser creates a new user
 func (a *AuthRepository) CreateUser(userDto models.FacebookUser) (models.User, error) {
 	var newUser = models.User{
 		FacebookID: userDto.ID,
