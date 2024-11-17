@@ -12,3 +12,11 @@ type AuthenticateUserResponse struct {
 type GetUserByIDDto struct {
 	ID string `json:"id"`
 }
+
+type UpdateRoleRequest struct {
+	Role string `json:"role" validate:"required,oneof=user moderator admin"`
+}
+
+type UpdateStatusRequest struct {
+	IsActive bool `json:"is_active" validate:"required"`
+}

@@ -1,7 +1,13 @@
 package models
 
-// PaginateDto is a struct that represents the data that is required to paginate a list of users
-type PaginateDto struct {
+// GetPaginationFromQueryDto is a struct that represents the raw query parameters
+type GetPaginationFromQueryDto struct {
 	Offset string `json:"offset"`
 	Limit  string `json:"limit"`
+}
+
+// PaginateDto is a struct that represents the parsed pagination parameters
+type PaginateDto struct {
+	Offset int
+	Limit  int
 }

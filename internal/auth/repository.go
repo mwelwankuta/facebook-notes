@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"strconv"
-
 	"github.com/mwelwankuta/facebook-notes/pkg/models"
 	"gorm.io/gorm"
 )
@@ -21,17 +19,7 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 func (a *AuthRepository) GetAllUsers(dto models.PaginateDto) ([]models.User, error) {
 	var users []models.User
 
-	// convert string params to int for pagination
-	offset, err := strconv.Atoi(dto.Offset)
-	if err != nil {
-		return nil, err
-	}
-	limit, err := strconv.Atoi(dto.Limit)
-	if err != nil {
-		return nil, err
-	}
-
-	result := a.db.Find(&users).Offset(offset).Limit(limit)
+	result := a.db.Find(&users).Offset(dto.Offset).Limit(dto.Limit)
 	if result.Error != nil {
 		return users, result.Error
 	}
@@ -65,4 +53,20 @@ func (a *AuthRepository) CreateUser(userDto models.FacebookUser) (models.User, e
 	}
 
 	return a.GetUserByID(newUser.ID)
+}
+
+func (a *AuthRepository) UpdateUserRole(userId string, role string) (models.User, error) {
+	result := a.db.Model(&models.User{}).Where("id = ?", userId).Update("role", role)
+	if result.Error != nil {
+		return models.User{}, result.Error
+	}
+	return a.GetUserByID(userId)
+}
+
+func (a *AuthRepository) UpdateUserStatus(userId string, isActive bool) (models.User, error) {
+	result := a.db.Model(&models.User{}).Where("id = ?", userId).Update("is_active", isActive)
+	if result.Error != nil {
+		return models.User{}, result.Error
+	}
+	return a.GetUserByID(userId)
 }

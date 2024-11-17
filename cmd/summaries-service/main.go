@@ -10,11 +10,10 @@ import (
 	"github.com/mwelwankuta/facebook-notes/internal/summaries"
 	"github.com/mwelwankuta/facebook-notes/pkg/config"
 	"github.com/mwelwankuta/facebook-notes/pkg/db"
-	"github.com/mwelwankuta/facebook-notes/pkg/utils"
 )
 
 func main() {
-	cfg, err := config.LoadConfig("config/auth-config.yaml")
+	cfg, err := config.LoadConfig("config/summaries-config.yaml")
 	if err != nil {
 		panic("Could not load config file")
 	}
@@ -23,7 +22,7 @@ func main() {
 
 	summariesRepository := summaries.NewSummariesRepository(database)
 	summariesUseCase := summaries.NewSummariesUseCase(*summariesRepository, *cfg)
-	summaries.NewSummariesHandler(*summariesUseCase, cfg.OpenGraphClientID)
+	summariesHandler := summaries.NewSummariesHandler(*summariesUseCase, cfg.OpenGraphClientID)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -34,12 +33,24 @@ func main() {
 		TokenLookup: "header:Authorization",
 	})
 
-	e.GET("/api/summaries", utils.EndpointNotImplemented)
-	e.GET("/api/summaries/requests", utils.EndpointNotImplemented)
-	e.POST("/api/summaries/requests", utils.EndpointNotImplemented, jwtMiddleware)
+	// Protected routes requiring authentication
+	protected := e.Group("")
+	protected.Use(jwtMiddleware)
 
-	e.GET("/api/summaries/:id", utils.EndpointNotImplemented)
-	e.POST("/api/summaries/:id/rate", utils.EndpointNotImplemented, jwtMiddleware)
+	// User routes
+	protected.POST("/api/summaries/requests", summariesHandler.CreateSummaryRequestHandler)
+	protected.POST("/api/summaries/:id/rate", summariesHandler.RateSummaryHandler)
+
+	// Moderator routes
+	protected.POST("/api/summaries/:id/moderate", summariesHandler.ModerateSummaryHandler)
+	protected.PUT("/api/summaries/:id/edit", summariesHandler.EditSummaryHandler)
+	protected.POST("/api/summaries/:id/resources", summariesHandler.AddResourceLinkHandler)
+	protected.DELETE("/api/summaries/:id/resources/:linkId", summariesHandler.RemoveResourceLinkHandler)
+
+	// Public routes
+	e.GET("/api/summaries", summariesHandler.GetAllSummariesHandler)
+	e.GET("/api/summaries/requests", summariesHandler.GetAllRequestsHandler)
+	e.GET("/api/summaries/:id", summariesHandler.GetSummaryByIDHandler)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
 }

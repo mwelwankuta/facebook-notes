@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+
 	"github.com/mwelwankuta/facebook-notes/pkg/adapters"
 	"github.com/mwelwankuta/facebook-notes/pkg/config"
 	"github.com/mwelwankuta/facebook-notes/pkg/models"
@@ -70,4 +72,77 @@ func (a *AuthUseCase) GetAllUsers(dto models.PaginateDto) ([]models.User, error)
 
 func (a *AuthUseCase) GetUserByID(userId string) (models.User, error) {
 	return a.repo.GetUserByID(userId)
+}
+
+// UpdateUserRole updates a user's role
+func (a *AuthUseCase) UpdateUserRole(userId string, role string) (models.User, error) {
+	// Validate role
+	validRoles := []string{models.RoleUser, models.RoleModerator, models.RoleAdmin}
+	isValidRole := false
+	for _, r := range validRoles {
+		if r == role {
+			isValidRole = true
+			break
+		}
+	}
+	if !isValidRole {
+		return models.User{}, fmt.Errorf("invalid role: %s", role)
+	}
+
+	return a.repo.UpdateUserRole(userId, role)
+}
+
+// UpdateUserStatus updates a user's active status
+func (a *AuthUseCase) UpdateUserStatus(userId string, isActive bool) (models.User, error) {
+	return a.repo.UpdateUserStatus(userId, isActive)
+}
+
+// GetUserByFacebookID returns a user by their Facebook ID
+func (a *AuthUseCase) GetUserByFacebookID(facebookId string) (models.User, error) {
+	var user models.User
+	result := a.repo.db.Where("facebook_id = ?", facebookId).First(&user)
+	if result.Error != nil {
+		return models.User{}, result.Error
+	}
+	return user, nil
+}
+
+// ValidateUserRole checks if a user has the required role
+func (a *AuthUseCase) ValidateUserRole(userId string, requiredRole string) (bool, error) {
+	user, err := a.GetUserByID(userId)
+	if err != nil {
+		return false, err
+	}
+
+	if user.Role == models.RoleAdmin {
+		return true, nil
+	}
+
+	return user.Role == requiredRole, nil
+}
+
+// GetCurrentUserProfile gets the current user's full profile
+func (a *AuthUseCase) GetCurrentUserProfile(userId string) (models.User, error) {
+	user, err := a.GetUserByID(userId)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	if !user.IsActive {
+		return models.User{}, fmt.Errorf("user account is inactive")
+	}
+
+	return user, nil
+}
+
+// DeactivateUser deactivates a user account
+func (a *AuthUseCase) DeactivateUser(userId string) error {
+	_, err := a.UpdateUserStatus(userId, false)
+	return err
+}
+
+// ReactivateUser reactivates a user account
+func (a *AuthUseCase) ReactivateUser(userId string) error {
+	_, err := a.UpdateUserStatus(userId, true)
+	return err
 }
