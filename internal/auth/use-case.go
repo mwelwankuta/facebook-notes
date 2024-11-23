@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/mwelwankuta/facebook-notes/pkg/adapters"
 	"github.com/mwelwankuta/facebook-notes/pkg/config"
@@ -12,12 +14,14 @@ import (
 type AuthUseCase struct {
 	config config.Config
 	repo   AuthRepository
+	redis  *adapters.RedisClient
 }
 
-func NewAuthUseCase(repo AuthRepository, cfg config.Config) *AuthUseCase {
+func NewAuthUseCase(repo AuthRepository, cfg config.Config, redis *adapters.RedisClient) *AuthUseCase {
 	return &AuthUseCase{
 		repo:   repo,
 		config: cfg,
+		redis:  redis,
 	}
 }
 
@@ -71,7 +75,25 @@ func (a *AuthUseCase) GetAllUsers(dto models.PaginateDto) ([]models.User, error)
 }
 
 func (a *AuthUseCase) GetUserByID(userId string) (models.User, error) {
-	return a.repo.GetUserByID(userId)
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("user:%s", userId)
+
+	// Try to get from cache first
+	var user models.User
+	err := a.redis.Get(ctx, cacheKey, &user)
+	if err == nil {
+		return user, nil
+	}
+
+	// If not in cache, get from database
+	user, err = a.repo.GetUserByID(userId)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	// Cache the result
+	a.redis.Set(ctx, cacheKey, user, 15*time.Minute)
+	return user, nil
 }
 
 // UpdateUserRole updates a user's role
@@ -89,7 +111,17 @@ func (a *AuthUseCase) UpdateUserRole(userId string, role string) (models.User, e
 		return models.User{}, fmt.Errorf("invalid role: %s", role)
 	}
 
-	return a.repo.UpdateUserRole(userId, role)
+	user, err := a.repo.UpdateUserRole(userId, role)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	// Invalidate cache
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("user:%s", userId)
+	a.redis.Delete(ctx, cacheKey)
+
+	return user, nil
 }
 
 // UpdateUserStatus updates a user's active status

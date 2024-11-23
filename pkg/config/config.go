@@ -22,6 +22,11 @@ type Config struct {
 	RedisToken            string `yaml:"redis_token"`
 	RedisUrl              string `yaml:"redis_url"`
 	JwtSecret             string `yaml:"jwt_secret"`
+	Redis                 struct {
+		Addr     string `yaml:"addr"`
+		Password string `yaml:"password"`
+		DB       int    `yaml:"db"`
+	} `yaml:"redis"`
 }
 
 // LoadConfig loads the configuration from a file or environment variables if the file is not found

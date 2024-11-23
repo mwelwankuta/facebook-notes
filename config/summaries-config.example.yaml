@@ -1,7 +1,13 @@
 port: 9090
+
+redis:
+  nodes:
+    - "<redis_host>:<redis_port>"
+  password: "<redis_password>"
+  token: "<redis_token>"
+
 open_ai_key: <open_ai_key>
 open_ai_secret: <open_ai_secret>
 database: root:@tcp(127.0.0.1:3306)/facebook-notes?charset=utf8mb4&parseTime=True&loc=Local
-redis_token: <redis_token>
-redis_url: <redis_url>
 jwt_token: supersecretpassword
+news_api_key: <news_api_key>

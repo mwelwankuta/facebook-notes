@@ -1,10 +1,13 @@
 package summaries
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mwelwankuta/facebook-notes/pkg/adapters"
 	"github.com/mwelwankuta/facebook-notes/pkg/config"
 	"github.com/mwelwankuta/facebook-notes/pkg/models"
 )
@@ -19,12 +22,14 @@ var (
 type SummariesUseCase struct {
 	config config.Config
 	repo   SummariesRepository
+	redis  *adapters.RedisClient
 }
 
-func NewSummariesUseCase(repo SummariesRepository, cfg config.Config) *SummariesUseCase {
+func NewSummariesUseCase(repo SummariesRepository, cfg config.Config, redis *adapters.RedisClient) *SummariesUseCase {
 	return &SummariesUseCase{
 		repo:   repo,
 		config: cfg,
+		redis:  redis,
 	}
 }
 
@@ -87,7 +92,25 @@ func (uc *SummariesUseCase) GetAllRequests(dto models.PaginateDto) ([]SummaryReq
 }
 
 func (uc *SummariesUseCase) GetSummaryByID(id string) (Summary, error) {
-	return uc.repo.GetSummaryByID(id)
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("summary:%s", id)
+
+	// Try to get from cache first
+	var summary Summary
+	err := uc.redis.Get(ctx, cacheKey, &summary)
+	if err == nil {
+		return summary, nil
+	}
+
+	// If not in cache, get from database
+	summary, err = uc.repo.GetSummaryByID(id)
+	if err != nil {
+		return Summary{}, err
+	}
+
+	// Cache the result
+	uc.redis.Set(ctx, cacheKey, summary, 30*time.Minute)
+	return summary, nil
 }
 
 func (uc *SummariesUseCase) RateSummary(id string, dto RateSummaryDto) error {
@@ -121,7 +144,17 @@ func (uc *SummariesUseCase) EditSummary(id string, dto EditSummaryDto, user mode
 	}
 
 	// Update summary content
-	return uc.repo.UpdateSummaryContent(id, dto.Content, edit.Version)
+	err = uc.repo.UpdateSummaryContent(id, dto.Content, edit.Version)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("summary:%s", id)
+	uc.redis.Delete(ctx, cacheKey)
+
+	return nil
 }
 
 // AddResourceLink adds a resource link to a summary
